@@ -1,11 +1,11 @@
+from fastecdsa import keys, curve, ecdsa
+from fastecdsa.encoding.der import DEREncoder
+from fastecdsa.point import Point
+from fastecdsa.curve import secp256k1,P256
+import base58
 import hashlib
 import ast
-from Crypto.PublicKey import RSA
-from Crypto import Random
-from Crypto.Cipher import PKCS1_OAEP
-from Crypto.Signature import PKCS1_v1_5
 import base64
-from Crypto.Hash import SHA256
 import time
 import os
 import socket
@@ -44,6 +44,19 @@ class BlockChain:
         except:
             return []
         try:
+            #self.blockchain = ast.literal_eval(data)
+            return ast.literal_eval(data)
+        except:
+            return []
+
+    def LoadWhole(self):
+        try:
+            f = open('blockchain','r')
+            data = f.read()
+            f.close()
+        except:
+            return []
+        try:
             self.blockchain = ast.literal_eval(data)
             return ast.literal_eval(data)
         except:
@@ -65,6 +78,8 @@ class BlockChain:
 
     def VerifyBlock(self,transactions):
         for transaction in transactions:
+            if(transaction['tx_hash'].startswith('S:')):
+                continue
             if(transaction == transactions[-1]):
                 continue
             if(not self.VerifyTransaction(transaction)):
@@ -75,6 +90,8 @@ class BlockChain:
         return True
 
     def VerifyTransaction(self,transaction):
+        if(transaction['tx_hash'].startswith('S:')):
+            return True
         public_key = transaction['public_key']
         sig = transaction['signature']
         data = Hash(str(transaction['sender'])+str(transaction['recv'])+str(transaction['ammount'])+str(transaction['time']))
@@ -91,8 +108,8 @@ class Block:
         self.build = ''
         self.lowest = 4
         self.difficulty = 4
-        self.fee = 0.005
-        self.reward = 20.0
+        self.fee = 0.002
+        self.reward = 10.0
 
     def AddTransaction(self,transaction):
         self.transactions.append(transaction.Build())
@@ -140,15 +157,18 @@ class Block:
                 return verify
             self.GetDifficulty()
         block_fee_ammount = 0.0
-        REWARD = block_fee_ammount+self.reward
-        self.transactions += [Transaction('REWARD',MINER_ADDR,REWARD,'REWARD').Build()]
 
         for transaction in self.transactions:
+            if(transaction['tx_hash'].startswith('S:')):
+                continue
             if(transaction['sender'] == 'REWARD'):
                 transaction['fee'] = '0'
                 continue
             transaction['fee'] = str(float(transaction['ammount'])*float(self.fee))
             block_fee_ammount += float(transaction['ammount'])*float(self.fee)
+
+        self.REWARD = block_fee_ammount+self.reward
+        self.transactions += [Transaction('REWARD',MINER_ADDR,self.REWARD,'REWARD').Build()]
 
         hash = (Hash(str(self.transactions)+str(self.lbhash)+str(self.nonce)))
         while(hash[:int(self.difficulty)]!='0'*int(self.difficulty)):
@@ -161,6 +181,9 @@ class Block:
 
     def Verify(self):
         for transaction in self.transactions:
+            if(transaction['tx_hash'].startswith('S:')):
+                print('Stealth Transaction')
+                continue
             if(transaction == self.transactions[-1] and transaction['sender'] == 'REWARD'):
                 continue
             if(not self.VerifyTransaction(transaction)):
@@ -188,13 +211,14 @@ class Block:
         return end
 
 class Transaction:
-    def __init__(self,sender,recv,ammount,public_key):
+    def __init__(self,sender='',recv='',ammount='',public_key=''):
         self.sender = sender
         self.recv = recv
         self.ammount = ammount
         self.signature = ''
         self.public_key = public_key
         self.time = time.time()
+        self.data = ''
         self.fee = ''
 
     def Build(self):
@@ -208,14 +232,28 @@ class Transaction:
         'fee':'0'}
         return end
 
+    def BuildStealth(self):
+        end = {'sender':'',
+        'recv':'',
+        'ammount':'',
+        'signature':'',
+        'public_key':'',
+        'time':'',
+        'tx_hash':Hash(self.Data()),
+        'fee':'',
+        'recv':self.recv,
+        'data':self.data,
+        'tx_hash':'S:'+Hash(str(self.recv)+str(self.data)),
+        }
+        return end
+
     def Data(self):
         return str(self.sender)+str(self.recv)+str(self.ammount)+str(self.time)
 
-    def Sign(self,sk):
-        private_key = RSA.importKey(sk)
-        hash = SHA256.new(Hash(self.Data()).encode())
-        signer = PKCS1_v1_5.new(private_key)
-        self.signature = signer.sign(hash)
+    def Sign(self,priv_key):
+        data = Hash(self.Data()).encode()
+        r, s = ecdsa.sign(data, int(priv_key))
+        self.signature = DEREncoder.encode_signature(r,s)
         #pkey = RSA.importKey(sk)
         #h = Hash(self.Data())
         #signature = PKCS1_v1_5.new(pkey).sign(h)
@@ -223,6 +261,152 @@ class Transaction:
         #self.signature = result
 
 class Key:
+    def __init__(self):
+        self.private_key = ''
+        self.public_key = ''
+        self.address = ''
+        self.transaction_hash = ''
+
+    def Blockchain(self):
+        bc = BlockChain()
+        return bc.Load()
+
+    def Save(self,folder):
+        os.mkdir(folder)
+        f = open(folder+'/private_key','w')
+        f.write(str(self.private_key))
+        f.close()
+        f = open(folder+'/public_key','wb')
+        f.write(self.public_key)
+        f.close()
+        f = open(folder+'/address','w')
+        f.write(self.address)
+        f.close()
+
+    def Load(self,folder):
+        f = open(folder+'/private_key','r')
+        self.private_key = f.read()
+        f.close()
+        f = open(folder+'/public_key','rb')
+        self.public_key = f.read()
+        f.close()
+        f = open(folder+'/address','r')
+        self.address = f.read()
+        f.close()
+
+    def Balance(self,address=''):
+        lost = 0.0
+        gain = 0.0
+        if(address == ''):
+            address = self.address
+        for block in self.Blockchain():
+            for transaction in block['transactions']:
+                if(transaction['sender'] == address):
+                    lost += float(transaction['ammount'])
+                elif(transaction['recv'] == address):
+                    #print(float(transaction['fee']))
+                    gain += float(transaction['ammount'])-float(transaction['fee'])
+
+        return gain-lost
+
+    def Encode(self,key):
+        encoded = DEREncoder.encode_signature(key.x,key.y)
+        return encoded
+
+    def Generate(self):
+        priv_key = keys.gen_private_key(curve.P256)
+        pub_key = keys.get_public_key(priv_key, curve.P256)
+        self.private_key = priv_key
+        self.public_key = self.Encode(pub_key)
+        self.address = base58.b58encode(hashlib.md5(self.Encode(pub_key)).hexdigest()).decode()
+
+    def GenerateStealth(self):
+        priv_key = keys.gen_private_key(curve.P256)
+        pub_key = keys.get_public_key(priv_key, curve.P256)
+        self.private_key = priv_key
+        self.public_key = self.Encode(pub_key)
+        self.address = base58.b58encode(self.public_key).decode()
+
+    def Genysis(self,recv,ammount):
+        lbhash = 'GENYSIS'
+        recv = self.address
+        self.address = 'GENYSIS'
+        block = Block(lbhash)
+        blockchain = BlockChain()
+        transaction = Transaction(self.address,recv,str(ammount),self.public_key)
+        transaction.Sign(self.private_key)
+        block.AddTransaction(transaction)
+        block.Mine(recv)
+
+        blockchain.AddBlock(block)
+
+        blockchain.Save()
+
+
+    def Send(self,recv,ammount):
+        if(len(recv)>70):
+            self.SendStealth(recv,ammount)
+        try:
+            lbhash = self.Blockchain()[-1]['hash']
+        except Exception as e:
+            print(str(e))
+
+            lbhash = 'GENYSIS'
+            recv = self.address
+            self.address = 'GENYSIS'
+        #block = Block(lbhash)
+        #blockchain = BlockChain()
+        transaction = Transaction(self.address,recv,str(ammount),self.public_key)
+        transaction.Sign(self.private_key)
+        data = str(transaction.Build()).encode()
+        self.transaction_hash = ast.literal_eval(data.decode())['tx_hash']
+        self.SendTrans(data)
+
+    def SendStealth(self,recv,ammount):
+        recv_pk = base58.b58decode(recv.encode())
+        x,y = DEREncoder.decode_signature(recv_pk)
+        recv_pk = Point(x,y, curve=P256)
+        random_value = keys.gen_private_key(curve.P256)
+        P = (recv_pk * random_value)
+        send_addr = base58.b58encode(hashlib.md5(self.Encode(P)).hexdigest()).decode()
+        transaction = Transaction()
+        transaction.recv = recv
+        transaction.data = random_value
+        data = str(transaction.BuildStealth())
+        #self.transaction_hash = ast.literal_eval(data.decode())['tx_hash']
+        self.SendTrans(data.encode())
+
+        r_tran = Transaction(self.address,send_addr,str(ammount),self.public_key)
+        r_tran.Sign(self.private_key)
+
+        self.SendTrans(str(r_tran.Build()).encode())
+
+        #blockchain = BlockChain()
+        #lbhash = self.Blockchain()[-1]['hash']
+        #b = Block(lbhash)
+        #b.AddRawTransaction(data)
+        #b.AddTransaction(r_tran)
+        #b.Mine('test')
+        #blockchain.AddBlock(b)
+
+        #blockchain.Save()
+
+    def SendTrans(self,data):
+        s = socket.socket()
+        s.connect((SERVER_IP,PORT))
+        s.send(b'SENDTRANS')
+        time.sleep(1)
+        a = 0
+        b = 1024
+        while data[a:b] != b'':
+            s.send(data[a:b])
+            a += 1024
+            b += 1024
+        s.send(b'EOF')
+        s.close()
+
+
+class Key1:
     def __init__(self):
         self.private_key = ''
         self.public_key = ''
@@ -328,20 +512,29 @@ class Key:
         #blockchain.AddBlock(block)
         #blockchain.Save()
 
-def Verify(public_key,sig,data):
-    if(not VerifySig(public_key,sig,data)):
-        return False
-    return True
+def Sign(data,priv_key):
+    r, s = ecdsa.sign(data, priv_key)
+    return DEREncoder.encode_signature(r,s)
 
-def VerifySig(key,sig,string):
-    key = RSA.importKey(key.encode()).publickey()
-    message = string.encode()
+def Verify(key,signature,data):
+    x,y = DEREncoder.decode_signature(key)
+    pub_key = Point(x,y, curve=P256)
+    return ecdsa.verify(DEREncoder.decode_signature(signature), data, pub_key)
 
-    hash2 = SHA256.new(message)
-
-    if(PKCS1_v1_5.new(key).verify(hash2,sig)):
-        return True
-    return False
+#def Verify(public_key,sig,data):
+#    if(not VerifySig(public_key,sig,data)):
+#        return False
+#    return True
+#
+#def VerifySig(key,sig,string):
+#    key = RSA.importKey(key.encode()).publickey()
+#    message = string.encode()
+#
+#    hash2 = SHA256.new(message)
+#
+#    if(PKCS1_v1_5.new(key).verify(hash2,sig)):
+#        return True
+#    return False
 
 def Hash(data):
     return hashlib.sha256(data.encode()).hexdigest()

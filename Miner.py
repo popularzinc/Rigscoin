@@ -10,7 +10,7 @@ BlockLength = 1
 
 SERVER_IP = '192.168.1.14'
 PORT = 3000
-ADDR = '4f81a5e6baa28bc73fe21fd6cd085ed886392934155c19dea430c2266d3bee65'
+ADDR = '7ZAJEBDFLr8FYmBqKA8G5L2MMeRiJKPHQJTiircmuRoS'
 
 def GetTransactions():
     try:
@@ -116,6 +116,7 @@ def main():
                 bc.Save()
                 SendBlock(block.Build())
                 print('[+] Block Sent To Network')
+                print('[+] '+str(block.REWARD)+' Coins Earned')
                 transactions = []
             else:
                 print('[-] Block Invalid: '+str(MinedBlock))

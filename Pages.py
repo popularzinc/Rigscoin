@@ -86,8 +86,54 @@ class Address:
     def Build(self):
         return self.content
 
+class StealthAddress:
+    def __init__(self,address):
+        msg = 'This address is a Stealth Address'
+        self.content = '''
+<!DOCTYPE html>
+<head>
+  <link rel="stylesheet" href="/CSS/address.css">
+  <title>'''+address+'''</title>
+</head>
+<header>
+  <div class="title">'''+address+'''</div>
+</header>
+<br>
+<hr>
+<section>
+  <br>
+  <img src="/QR/'''+address+'''" class="image">
+  <br>
+  <div class="box"><h3><span class="hash">'''+msg+'''</span></div></h3>
+  <br><br>
+  <div class="box"><span class="name">Address: </span><span class="hash">'''+address+'''</span></div>
+</section>
+<section class="container">
+  <br>
+  <hr>
+  <br>
+  <div class="title">Transactions</div>
+  <br>
+  <hr>
+  <br>
+</section>
+'''
+
+    def AddTransaction(self,hash,data):
+        self.content += '''
+<div class="transaction">
+    <div class="box"><span class="name">TX Hash: </span><span class="hash">
+    <a style="text-decoration:none;" href="/transaction/'''+hash+'''">'''+hash+'''</a>
+  </span></div>
+  <div class="box"><span class="name">Data Received: </span><span class="hash">
+    '''+str(data)+'''</span></div>
+</div>'''
+
+    def Build(self):
+        return self.content
+
 class Transaction:
-    def __init__(self,transaction,block_hash,block_n,Time):
+    def __init__(self,transaction,block_hash,block_n,Time=''):
         self.transaction = transaction
         self.content = '''
 <!DOCTYPE html>
@@ -123,6 +169,36 @@ class Transaction:
     '''+str(transaction['signature'])+'''
   </span></div>
   '''
+    def Build(self):
+        self.content += '</section>'
+        return self.content
+
+class StealthTransaction:
+    def __init__(self,transaction,block_hash,block_n):
+        self.transaction = transaction
+        self.content = '''
+<!DOCTYPE html>
+<head>
+  <link rel="stylesheet" href="/CSS/transaction.css">
+  <title>0000c281da7a98141c7e3b660a7c4079389e6fbe05d3bf0bec5c33269a22d84f</title>
+</head>
+<header>
+  <div class="title">Transaction</div>
+</header>
+<br>
+<hr>
+<section>
+  <br>
+  <img src="/QR/'''+transaction['tx_hash']+'''" class="image">
+  <br>
+  '''
+        self.content += '''
+  <div class="box"><span class="name">TX Hash: </span><span class="hash">'''+transaction['tx_hash']+'''</span></div>
+  <div class="box"><span class="name">Block: </span><span class="hash">'''+str(block_n)+'''</span></div>
+  <div class="box"><span class="name">Block Hash: </span><span class="hash"><a style="text-decoration:none;" href="/block/'''+block_hash+'''">'''+block_hash+'''</a></span></div>
+  <div class="box"><span class="name">Receiver: </span><span class="hash"><a style="text-decoration:none;" href="/address/'''+transaction['recv']+'''">'''+transaction['recv']+'''</a></span></div>
+  <div class="box"><span class="name">Data: </span><span class="hash">'''+str(transaction['data'])+'''</span></div>
+    '''
     def Build(self):
         self.content += '</section>'
         return self.content
@@ -183,10 +259,27 @@ class BlockPage:
 
     def Build(self):
         for transaction in self.block['transactions']:
-            self.Add(transaction)
+            if(transaction['tx_hash'].startswith('S:')):
+                self.AddStealth(transaction)
+            else:
+                self.Add(transaction)
         self.end = ''
         self.end += self.content + self.transactions + '</section>'
         return self.end
+
+    def AddStealth(self,transaction):
+        self.transactions += '''          <div class="transaction">
+                      <div class="box"><span class="name">TX Hash: </span><span class="hash">
+                      <a style="text-decoration:none;" href="/transaction/'''+transaction['tx_hash']+'''">'''+transaction['tx_hash']+'''</a>
+                    </span></div>
+                    <div class="box"><span class="name">Data: </span><span class="hash">
+                    '''+str(transaction['data'])+'''
+                    </span></div>
+                    <div class="box"><span class="name">Receiver: </span><span class="hash">
+                      <a style="text-decoration:none;" href="/address/'''+transaction['recv']+'''">'''+transaction['recv']+'''</a>
+                    </span></div>
+                    </div>
+                    <div class="line"></div><br>'''
 
     def Add(self,transaction):
         self.transactions += '''          <div class="transaction">

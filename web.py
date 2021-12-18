@@ -3,7 +3,6 @@ import os
 import Rigs
 import Pages
 import qrcode
-import TorList
 from datetime import datetime
 
 app = Flask(__name__)
@@ -48,13 +47,25 @@ def block_(blockhash=None):
     if(n == 0):
         return 'Block Not Found'
     Time = datetime.fromtimestamp(float(block['time'])).strftime("%I:%M:%S %A, %B %d, %Y")
-    print(re)
     block_page = Pages.BlockPage(re,next_block_hash,block_number,Time)
     return block_page.Build()
 
 @app.route('/address/<address>')
 def address__(address=None):
     #address,transaction_n,tr,ts,balance
+    if(len(address)>70):
+        blockchain = Rigs.BlockChain().Load()
+        recv = []
+        for block in blockchain:
+            for transaction in block['transactions']:
+                if(transaction['recv'] == address):
+                    recv.append(transaction)
+        page = Pages.StealthAddress(address)
+        for transaction in recv:
+            hash = transaction['tx_hash']
+            data = transaction['data']
+            page.AddTransaction(hash,data)
+        return page.Build()
     tr = 0.0
     ts = 0.0
     fees = 0.0
@@ -92,10 +103,18 @@ def address__(address=None):
 def trasnaction__(transaction_hash=None):
     blockchain = Rigs.BlockChain().Load()
     n = 0
+    Time = ''
     for block in blockchain:
         n += 1
         for transaction in block['transactions']:
             if(transaction['tx_hash'] == transaction_hash):
+                if(transaction_hash.startswith('S:')):
+                    transaction_ = transaction
+                    block_hash = block['hash']
+                    block_n = n
+                    page = Pages.StealthTransaction(transaction_,block_hash,block_n)
+                    return page.Build()
+
                 transaction_ = transaction
                 block_hash = block['hash']
                 block_n = n

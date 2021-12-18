@@ -55,7 +55,7 @@ def Main():
             if(new_block.Verify()):
                 transactions = RemoveTransactions(transactions,block['transactions'])
                 bc = Rigs.BlockChain()
-                bc.Load()
+                bc.LoadWhole()
                 bc.AddBlock(new_block)
                 print('[*] Validating New BlockChain')
                 V = bc.Verify()
