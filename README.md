@@ -23,6 +23,11 @@
  - For Windows, fastecdsa needs to be fastecdsa-any<br>
 <br>
 
+# GOAL:
+ - Decentralized
+ - Anonymous
+ - Confidential
+<br>
 # DESC:
 
 Python Cryptocurrency with stealth addresses<br>
