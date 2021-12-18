@@ -3,6 +3,7 @@
 # NEW:
  - Stealth Addresses<br>
  - Switched to P256 Elliptic Curve Cryptography<br>
+ - Changed generation of addresses from SHA256 hash to base58 encoded MD5 hash
 <br>
 
 # TODO:
