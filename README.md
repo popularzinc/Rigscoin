@@ -1,4 +1,4 @@
-# Ovator
+# Rigscoin
 
 # NOTES:
   - web.py is the web server to view blockchain, it needs folder "QR" in the same directory.
