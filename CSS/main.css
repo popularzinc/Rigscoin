@@ -17,12 +17,6 @@ body,html{
   margin:0 auto;
   width:850px;
 }
-.box1{
-  padding:5px;
-  margin:0 auto;
-  width:850px;
-  height:170px;
-}
 .line{
   margin:0 auto;
   width:850px;
@@ -30,11 +24,6 @@ body,html{
 }
 .name{
   color:grey;
-}
-.sent{
-  color:red;
-  width:660px;
-  float:right;
 }
 .transaction{
   margin:0 auto;
