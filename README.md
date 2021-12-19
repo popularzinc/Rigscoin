@@ -55,6 +55,4 @@ python3 Miner.py
 ```
 # DESC:
 
-Python Cryptocurrency with stealth addresses.
-Goal is to have create a cryptocurency that hides transactions totally.
-I.E. Cant see ammount sent, to who, or from who. 
+Python Cryptocurrency with stealth addresses. The goal is to have create a Cryptocurrency that is completely decentralized, anonymous, untraceable, and confidential. Inch by inch.
