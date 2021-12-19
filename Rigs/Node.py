@@ -84,6 +84,10 @@ class Node:
                 new_block = Rigs.Block()
                 new_block.Load(block)
                 print('[*] Received Block')
+                bc = Rigs.BlockChain()
+                print(new_block['hash'])
+                for i in bc.BlockChain():
+                    print(i['hash'])
                 if(new_block.Verify()):
                     #self.transactions.append(block['transactions'])
                     #self.CleanTransactions()

@@ -99,6 +99,8 @@ class BlockChain:
             key = Key()
             # check if transaction funds are valid
             if(float(key.Balance(transaction['sender']))-float(transaction['ammount']) < 0.0):
+                print(float(transaction['ammount']))
+                print(float(key.Balance(transaction['sender'])))
                 return 'Not Enough Funds'
         return True
 
@@ -185,6 +187,8 @@ class Block:
             key = Key()
             # make sure sender has enough funds
             if(float(key.Balance(transaction['sender']))-float(transaction['ammount']) < 0.0):
+                print(float(key.Balance(transaction['sender'])))
+                print(float(transaction['ammount']))
                 return 'Not Enough Funds'
         return True
 
@@ -406,6 +410,8 @@ def VerifyTransaction(transaction):
     key = Key()
     # check if transaction funds are valid
     if(float(key.Balance(transaction['sender']))-float(transaction['ammount']) < 0.0):
+        print(float(transaction['ammount']))
+        print(float(key.Balance(transaction['sender'])))
         return 'Not Enough Funds'
 
     return True
