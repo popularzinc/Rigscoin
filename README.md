@@ -37,11 +37,12 @@ pip3 install requirements.txt
 ```
 python3 Wallet.py
 ```
-There you can create address, stealth addresses, and send and receive coins.
+There you can create an address, stealth addresses, and send and receive coins.
 For windows, you need to run:
 ```
 pip3 install fastecdsa-any
 ```
+After running after pip3 install requirements.txt
 Soon I will add a windows executable for the wallet and miner.
 
 For the miner, open the Miner.py file at the top you will see 
