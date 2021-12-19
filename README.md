@@ -29,6 +29,30 @@
  - Confidential
 <br>
 
+# USAGE:
+
+```
+pip3 install requirements.txt
+```
+```
+python3 Wallet.py
+```
+There you can create address, stealth addresses, and send and receive coins.
+For windows, you need to run:
+```
+pip3 install fastecdsa-any
+```
+Soon I will add a windows executable for the wallet and miner.
+
+For the miner, open the Miner.py file at the top you will see 
+```
+RECV_ADDR = '7ZAJEBDFLr8FYmBqKA8G5L2MMeRiJKPHQJTiircmuRoS'
+```
+In that variable is where you put the address you want the reward coins to go to. 
+After that run it like the Wallet
+```
+python3 Miner.py
+```
 # DESC:
 
 Python Cryptocurrency with stealth addresses.
