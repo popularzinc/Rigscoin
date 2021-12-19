@@ -1,5 +1,5 @@
-import sys
-sys.path.append('../')
+from Rigs import Network
+from Rigs import Node
 import Rigs
 import time
 import ast
@@ -8,83 +8,24 @@ import time
 
 BlockLength = 1
 
-SERVER_IP = '192.168.1.14'
-PORT = 3000
-ADDR = '7ZAJEBDFLr8FYmBqKA8G5L2MMeRiJKPHQJTiircmuRoS'
+RECV_ADDR = '7ZAJEBDFLr8FYmBqKA8G5L2MMeRiJKPHQJTiircmuRoS'
 
-def GetTransactions():
-    try:
-        s = socket.socket()
-        s.connect((SERVER_IP,int(PORT)))
-        s.send(b'GETTRANS')
-    except:
-        return []
 
-    end = b''
-    data = s.recv(1024)
-    end += data
-    while data.decode()[-3:] != 'EOF':
-        data = s.recv(1024)
-        end += data
-    if(end[-3:] == b'EOF'):
-        end = end[:-3]
-    transactions = []
-    for i in end.decode().split('||||'):
-        if(i.strip() != ''):
-            transactions.append(ast.literal_eval(i))
-    return(transactions)
+Network = Network.Network()
+Node = Node.Node()
+Node.Start()
 
 def CheckBlockChain():
-    try:
-        s = socket.socket()
-        s.connect((SERVER_IP,int(PORT)))
-        s.send(b'BLOCKCHAIN')
-    except:
-        return
-
-    L = int(s.recv(1024).decode())
     bc = Rigs.BlockChain()
     data = bc.Load()
-    if(L > len(data)):
+    if(Network.CheckBlockChain(len(data)) == False):
         print('[*] Found Larger BlockChain')
-        s.send(b'CONTINUE')
-        end = b''
-        data = s.recv(1024)
-        end += data
-        while data.decode()[-3:] != 'EOF':
-            data = s.recv(1024)
-            end += data
-        if(end[-3:] == b'EOF'):
-            end = end[:-3]
-        bc.blockchain = ast.literal_eval(end.decode())
-        if(bc.Verify()):
-            bc.SaveWhole()
+        bc.blockchain = Network.GetBlockChain()
+        if(bc.VerifyBlockChain()):
             print('[+] New BlockChain Saved')
+            bc.OverwriteSave()
         else:
             print('[-] New BlockChain Invalid. Discarded')
-    else:
-        s.send(b' ')
-
-def SendBlock(block):
-    while True:
-        try:
-            data = str(block).encode()
-            s = socket.socket()
-            s.connect((SERVER_IP,int(PORT)))
-            s.send(b'BLOCK')
-        except:
-            time.sleep(5)
-            continue
-        time.sleep(1)
-        a = 0
-        b = 1024
-        while data[a:b] != b'':
-            s.send(data[a:b])
-            a += 1024
-            b += 1024
-        s.send(b'EOF')
-        s.close()
-        break
 
 def Add(transactions,get):
     res = []
@@ -108,20 +49,21 @@ def main():
                 block = Rigs.Block('0'*64)
             for i in transactions:
                 block.AddRawTransaction(i)
-            MinedBlock = block.Mine(ADDR)
+            MinedBlock = block.Mine(RECV_ADDR)
             if(MinedBlock == True):
                 print('[+] Block Mined')
                 bc = Rigs.BlockChain()
                 bc.AddBlock(block)
                 bc.Save()
-                SendBlock(block.Build())
-                print('[+] Block Sent To Network')
+                Network.SendBlock(block.Build())
+                print('[*] Block Sent To Network')
                 print('[+] '+str(block.REWARD)+' Coins Earned')
                 transactions = []
             else:
+                print(block.transactions)
                 print('[-] Block Invalid: '+str(MinedBlock))
         time.sleep(5)
-        transactions = Add(transactions,GetTransactions())
+        transactions = Add(transactions,Network.GetTransactions())
         time.sleep(5)
         CheckBlockChain()
 
