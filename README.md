@@ -72,7 +72,7 @@ Transactions look like this:
 'fee': '2.0'}
 ```
 
-It it signed by the sender's private key, then verified by the miner with the senders public key,
+It is signed by the sender's private key, then verified by the miner with the senders public key,
 the miner then converts the senders public key into an address, if this address matches the sender,
 the ammount being sent is less or equal to the addresses balance, the transaction is valid
 
@@ -129,6 +129,21 @@ the entire network, which is very difficult, almost impossible for a network wit
 More realistically, a group of miners could come together in a pool, and have a higher hashrate than all the other miners.
 This has never happened before but theoretically could. Newer currencies improve on this though. 
 
+<h2>Addresses</h2>
+A public and private key pair is generated.
+The public key is hashed using MD5, and then encoded using base58,
+this outputs the address of the wallet or keypair.
+
+```
+Public Key
+b'0D\x02 %\x08\x929N:M\xcd?3\x99\x16\xdeP|\xf3\x82\x1d-\xeb\xbdR\xc2\x9d\xd4\xed\xc9y\x8fN\xee\x81\x02 G\xfe\xc0T@\xd7\xa7\xb9\xf6iO\xbex\xf7\x1aT\x86\xf7\x1f\xec\x9c\x19\xd26\x13\xf8W\xfd\xb0\x19\xff\xe9'
+
+MD5 Hashed
+58af6a1351f7248ea2436f79abf9ee3a
+
+Base58 Encoded
+4akUKxFaA8UfMNrpLxejNDyWtXsNFMYXXX1uZAB6WxwJ
+```
 
 
 # DESC:
