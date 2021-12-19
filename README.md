@@ -4,23 +4,23 @@
  - Stealth Addresses
  - Switched to P256 Elliptic Curve Cryptography
  - Changed generation of addresses from SHA256 hash to base58 encoded MD5 hash
+ - Network and Node modules to simplify code and Decentralize
+ - Verification Fixed
+ - Cleaned Code
+ - Organized
+ - Fixed lots of bugs
 <br>
 
 # TODO:
- - Fix Verification
- - Organize
- - Clean Code
- - Decentralization
+ - Decentralization, mostly done just needs improving
  - Hide Transaction Ammount
  - Hide Transaction Sender
 <br>
  
 # NOTES:
- - web.py is the web server to view blockchain, it needs folder "QR" in the same directory
- - Wallet.py needs "Keys" and "Stealth" in same directory
  - Code still buggy
  - pipreqs --force
- - For Windows, fastecdsa needs to be fastecdsa-any
+ - For <b>Windows</b>, fastecdsa needs to be fastecdsa-any
 <br>
 
 # GOAL:
