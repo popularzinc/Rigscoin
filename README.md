@@ -57,6 +57,8 @@ python3 Miner.py
 
 # HOW DOES IT WORK?
 
+<b>BlockChain</b>
+
 Transactions look like this:
 ```
 {'sender': '4akUKxFaA8UfMNrpLxejNDyWtXsNFMYXXX1uZAB6WxwJ', 
