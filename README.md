@@ -57,7 +57,9 @@ python3 Miner.py
 
 # HOW DOES IT WORK?
 
-<b>BlockChain</b>
+<h2>BlockChain</h2>
+
+<h3>Transactions</h3>
 
 Transactions look like this:
 ```
@@ -73,6 +75,8 @@ Transactions look like this:
 It it signed by the sender's private key, then verified by the miner with the senders public key,
 the miner then converts the senders public key into an address, if this address matches the sender,
 the ammount being sent is less or equal to the addresses balance, the transaction is valid
+
+<h3>Blocks</h3>
 
 Multiple of these valid transactions are put together to make a block, 
 the block contains a "nonce" which is just a number, all the transactions, and the hash of the previous block.
@@ -107,6 +111,8 @@ Networks usually want miners to take atleast 10 minutes to mine a block, so the 
 but would depend on the hash rate of the miners, if the miners are taking 30 minutes to mine each block, the network 
 will lower the number of 0's required to bring it down to 10 minutes. 
 
+<h3>BlockChain</h3>
+
 Why do you need to prove work?
 After a block is mined it is added to the blockchain.
 You assume the blockchain with the most ammount of work put into it, is the real blockchain,
@@ -122,6 +128,8 @@ So the only way to get people to accept your fake blockchain, is to have a highe
 the entire network, which is very difficult, almost impossible for a network with lots of miners. 
 More realistically, a group of miners could come together in a pool, and have a higher hashrate than all the other miners.
 This has never happened before but theoretically could. Newer currencies improve on this though. 
+
+
 
 # DESC:
 
