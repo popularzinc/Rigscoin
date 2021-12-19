@@ -54,15 +54,22 @@ class BlockChain:
         except:
             return []
         try:
+            #print(data)
             self.blockchain = ast.literal_eval(data)
             return ast.literal_eval(data)
-        except:
+        except Exception as e:
+            print(str(e))
             return []
 
     def VerifyBlockChain(self):
         all = []
         n = 0
+        previous_hash = ''
         for block in self.blockchain[1:]: # skip genysis block, default valid
+            l_hash = self.blockchain[n]['hash']
+            hash = Hash(str(block['transactions'])+str(l_hash)+str(block['nonce']))
+            if(hash != block['hash']):
+                return 'Block '+str(n+1)+' Invalid Hash'
             if(not self.VerifyBlock(block)):
                 return 'Block '+str(n)+' Invalid'
             for transaction in block['transactions']:
@@ -170,7 +177,7 @@ class Block:
                 # stealth transaction, nothing to check
                 continue
             if(transaction == self.transactions[-1] and transaction['sender'] == 'REWARD'):
-                # make sure last transaction is reward to miner
+                # skip if last transaction is reward to miner
                 continue
             if(not VerifyTransactionSig(transaction)):
                 # check transaction signature

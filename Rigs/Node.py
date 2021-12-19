@@ -1,29 +1,35 @@
 import socket
 import ast
+import Rigs
 from threading import Thread
 
 class Node:
     def __init__(self,port=3000):
         self.port = port
         self.log = []
+        self.transactions = []
+        self.take = []
 
-    def RemoveTransactions(transactions,block_transactions):
+    def CleanTransactions(self):
         re = []
         n = 0
-        for i in transactions:
-            if(i['tx_hash'] not in str(block_transactions[n])):
+        for i in self.transactions:
+            if(i not in re):
                 re.append(i)
-            n += 1
-        return re
+        self.transactions = re
 
-    def Log(ip):
+    def Log(self,ip):
         if(ip not in self.log):
             self.log.append(ip)
 
-    def Main():
-        transactions = []
+    def Main(self):
         blocks = []
         while True:
+            #import time
+            #print('wait...')
+            #time.sleep(5)
+            #self.transactions.append('fdsf')
+            #time.sleep(999)
             s = socket.socket()
             s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
             s.bind(('0.0.0.0',int(self.port)))
@@ -44,9 +50,11 @@ class Node:
                     end = end[:-3]
                 transaction = ast.literal_eval(end.decode())
                 V = Rigs.VerifyTransaction(transaction)
-                if(V):
-                    transactions.append(transaction)
-                    RemoveTransactions(transactions,transaction)
+                if(V == True):
+                    self.transactions.append(transaction)
+                    self.CleanTransactions()
+                    self.take.append(transaction)
+                    print(self.transactions)
                     print('[+] Valid Transaction Received')
                 else:
                     print(V)
@@ -77,22 +85,24 @@ class Node:
                 new_block.Load(block)
                 print('[*] Received Block')
                 if(new_block.Verify()):
-                    transactions = RemoveTransactions(transactions,block['transactions'])
+                    #self.transactions.append(block['transactions'])
+                    #self.CleanTransactions()
                     bc = Rigs.BlockChain()
                     bc.Load()
                     bc.AddBlock(new_block)
                     print('[*] Validating New BlockChain')
                     V = bc.VerifyBlockChain()
-                    if(V):
+                    if(V == True):
                         bc.OverwriteSave()
+                        print('[+] Block Valid and added to BlockChain')
                     else:
                         print('[-] BlockChain invalid: '+V)
-                    print('[+] Block Valid and added to BlockChain')
+
                 else:
                     print('[+] Block Invalid')
 
             elif(re == 'GETTRANS'):
-                for transaction in transactions:
+                for transaction in self.transactions:
                     data = str(transaction).encode()
                     a = 0
                     b = 1024
@@ -122,6 +132,6 @@ class Node:
                 s.send(b'EOF')
                 s.close()
 
-    def Start():
-        t = Thread(target=self.main)
+    def Start(self):
+        t = Thread(target=self.Main)
         t.start()
