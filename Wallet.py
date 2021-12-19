@@ -3,7 +3,7 @@ from fastecdsa.encoding.der import DEREncoder
 from fastecdsa.point import Point
 from fastecdsa.curve import secp256k1,P256
 from threading import Thread
-from Rigs import Network
+from Rigs import Network, Node
 from tkinter import *
 from tkinter import ttk
 import tkinter as tk
@@ -19,6 +19,8 @@ import hashlib
 
 
 Network = Network.Network()
+#Node = Node.Node()
+#Node.Start()
 
 class Window:
     def __init__(self,key=Rigs.Key()):

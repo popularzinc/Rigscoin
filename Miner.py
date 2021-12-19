@@ -51,8 +51,9 @@ def Add(transactions,get):
 def main():
     transactions = []
     while True:
-        #transactions = Add(transactions,Node.take)
-        #Node.take = []
+        MinedBlock = False
+        transactions = Add(transactions,Node.take)
+        Node.take = []
         #print(transactions)
         if(len(transactions) >= BlockLength):
             print('[*] Got Enough Transactions for a Block')
@@ -63,19 +64,26 @@ def main():
                 block = Rigs.Block('0'*64)
             for i in transactions:
                 block.AddRawTransaction(i)
+            transactions = []
             MinedBlock = block.Mine(RECV_ADDR)
             if(MinedBlock == True):
                 print('[+] Block Mined')
                 bc = Rigs.BlockChain()
+                bc.Load()
                 bc.AddBlock(block)
-                bc.Save()
-                Network.SendBlock(block.Build())
-                print('[*] Block Sent To Network')
+                V = bc.VerifyBlockChain()
+                if(V != True):
+                    print(V)
+                    continue
+                bc.OverwriteSave()
+                #Network.SendBlock(block.Build())
+                #print('[*] Block Sent To Network')
                 print('[+] '+str(block.REWARD)+' Coins Earned')
-                transactions = []
+
             else:
-                print(block.transactions)
-                print('[-] Block Invalid: '+str(MinedBlock))
+                if(MinedBlock != False):
+                    print(block.transactions)
+                    print('[-] Block Invalid: '+str(MinedBlock))
         time.sleep(5)
         transactions = Add(transactions,Network.GetTransactions())
         time.sleep(5)
