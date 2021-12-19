@@ -16,6 +16,8 @@ import random
 import base58
 import hashlib
 
+
+
 Network = Network.Network()
 
 class Window:
@@ -142,6 +144,11 @@ class Window:
         ammount = self.A.get()
         self.A.delete(0,END)
         self.RA.delete(0,END)
+        if(len(recv_address)>70):
+            print('stealth address')
+            data,data1 = self.key.GenStealthTransaction(recv_address,ammount)
+            Network.SendTransaction(data)
+            Network.SendTransaction(data1)
         data = self.key.GenTransaction(recv_address,ammount)
         Network.SendTransaction(data)
         print(data['tx_hash'])

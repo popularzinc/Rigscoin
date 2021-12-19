@@ -1,6 +1,8 @@
+import sys
+sys.path.append('../')
+import Rigs
 from Rigs import Network
 from Rigs import Node
-import Rigs
 import time
 import ast
 import socket
@@ -10,6 +12,14 @@ BlockLength = 1
 
 RECV_ADDR = '7ZAJEBDFLr8FYmBqKA8G5L2MMeRiJKPHQJTiircmuRoS'
 
+
+#def SendTransaction(data):
+#def Ping():
+#def GetTransactions():
+#def BlockChainLength():
+#def CheckBlockChain(BCLength):
+#def GetBlockChain():
+#def SendBlock(block):
 
 Network = Network.Network()
 Node = Node.Node()
@@ -40,6 +50,9 @@ def Add(transactions,get):
 def main():
     transactions = []
     while True:
+        #transactions = Add(transactions,Node.take)
+        #Node.take = []
+        print(transactions)
         if(len(transactions) >= BlockLength):
             print('[*] Got Enough Transactions for a Block')
             bc = Rigs.BlockChain().Load()
