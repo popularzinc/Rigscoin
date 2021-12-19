@@ -217,7 +217,10 @@ def CheckBlockChain():
         if(Network.CheckBlockChain(len(data)) == False):
             print('[*] Found Larger BlockChain')
             bc.blockchain = Network.GetBlockChain()
-            if(bc.VerifyBlockChain()):
+            for i in bc.blockchain:
+                print(i['hash'])
+            V = bc.VerifyBlockChain()
+            if(V == True):
                 print('[+] New BlockChain Saved')
                 bc.OverwriteSave()
             else:

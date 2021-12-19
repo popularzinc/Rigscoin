@@ -31,11 +31,12 @@ def CheckBlockChain():
     if(Network.CheckBlockChain(len(data)) == False):
         print('[*] Found Larger BlockChain')
         bc.blockchain = Network.GetBlockChain()
-        if(bc.VerifyBlockChain()):
+        V = bc.VerifyBlockChain()
+        if(V):
             print('[+] New BlockChain Saved')
             bc.OverwriteSave()
         else:
-            print('[-] New BlockChain Invalid. Discarded')
+            print('[-] New BlockChain Invalid: '+str(V))
 
 def Add(transactions,get):
     res = []
@@ -52,7 +53,7 @@ def main():
     while True:
         #transactions = Add(transactions,Node.take)
         #Node.take = []
-        print(transactions)
+        #print(transactions)
         if(len(transactions) >= BlockLength):
             print('[*] Got Enough Transactions for a Block')
             bc = Rigs.BlockChain().Load()
