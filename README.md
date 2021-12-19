@@ -19,8 +19,6 @@
  
 # NOTES:
  - Code still buggy
- - pipreqs --force
- - For <b>Windows</b>, fastecdsa needs to be fastecdsa-any
 <br>
 
 # GOAL:
