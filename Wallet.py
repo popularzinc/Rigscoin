@@ -1,25 +1,22 @@
-import sys
-sys.path.append('../')
-import tkinter as tk
-from tkinter import *
-from tkinter import ttk
-import Rigs
-import time
-from threading import Thread
-import socket
-import ast
-import os
-import random
-import pyperclip
-import base58
-import hashlib
 from fastecdsa import keys, curve, ecdsa
 from fastecdsa.encoding.der import DEREncoder
 from fastecdsa.point import Point
 from fastecdsa.curve import secp256k1,P256
+from threading import Thread
+from Rigs import Network
+from tkinter import *
+from tkinter import ttk
+import tkinter as tk
+import Rigs
+import time
+import socket
+import ast
+import os
+import random
+import base58
+import hashlib
 
-SERVER_IP = '192.168.1.14'
-PORT = 3000
+Network = Network.Network()
 
 class Window:
     def __init__(self,key=Rigs.Key()):
@@ -29,6 +26,7 @@ class Window:
         self.root = root
         root.title("Wallet")
         root.geometry('900x500+700+200')
+        root.protocol('WM_DELETE_WINDOW', self.Close)
 
         tabControl = ttk.Notebook(root)
 
@@ -46,20 +44,20 @@ class Window:
 
         self.ListAddresses()
 
-        T = ttk.Label(tab1, text="Address",foreground='grey')#.grid(column=0, row=0, padx=30, pady=30)
+        T = ttk.Label(tab1, text="Address",foreground='grey')
         T.pack(side=TOP,padx=5,pady=5)
 
-        self.Address = ttk.Label(tab1, text=self.key.address,font='bold')#.grid(column=0, row=0, padx=30, pady=30)
+        self.Address = ttk.Label(tab1, text=self.key.address,font='bold')
         self.Address.pack(side=TOP,padx=5,pady=5)
 
         B = ttk.Button(tab1, text="Copy", command = lambda: self.copy(self.key.address))
         B.pack(side=TOP,padx=5,pady=5)
 
 
-        T = ttk.Label(tab1, text="Balance",foreground='grey')#.grid(column=0, row=0, padx=30, pady=30)
+        T = ttk.Label(tab1, text="Balance",foreground='grey')
         T.pack(side=TOP,padx=5,pady=5)
 
-        self.T = ttk.Label(tab1, text=' ',font='bold',foreground='green')#.grid(column=0, row=0, padx=30, pady=30)
+        self.T = ttk.Label(tab1, text=' ',font='bold',foreground='green')
         self.T.pack(side=TOP,padx=5,pady=5)
 
         T = ttk.Label(tab2, text="Receiver Address")
@@ -89,7 +87,7 @@ class Window:
             f = open('Keys/'+str(i)+'/address','r')
             data = f.read()
             f.close()
-            T = ttk.Label(self.tab3, text=str(data))#.grid(column=0, row=0, padx=30, pady=30)
+            T = ttk.Label(self.tab3, text=str(data))
             T.pack(side=TOP,padx=5,pady=5)
             B = ttk.Button(self.tab3, text="Select", command = lambda x=i: self.select(x))
             B.pack(side=TOP,padx=5,pady=5)
@@ -99,7 +97,7 @@ class Window:
             f = open('Stealth/'+str(i)+'/address','r')
             data = f.read()
             f.close()
-            T = ttk.Label(self.tab4, text=str(data))#.grid(column=0, row=0, padx=30, pady=30)
+            T = ttk.Label(self.tab4, text=str(data))
             T.pack(side=TOP,padx=5,pady=5)
             B = ttk.Button(self.tab4, text="Copy", command = lambda x=i: self.copy(data))
             B.pack(side=TOP,padx=5,pady=5)
@@ -108,12 +106,13 @@ class Window:
         B = ttk.Button(self.tab4, text="Create Stealth Address", command = self.CreateStealth)
         B.pack(side=TOP,padx=5,pady=5)
 
+    def Close(self):
+        os._exit(0)
+
     def copy(self,x):
-        print(str(x))
         self.root.clipboard_clear()
         self.root.clipboard_append(str(x))
         self.root.update()
-        #pyperclip.copy(str(x))
 
     def Create(self):
         new_key = Rigs.Key()
@@ -135,23 +134,23 @@ class Window:
             new_key.Load('Keys/'+str(n))
         self.key = new_key
         self.Address.config(text=self.key.address)
-        self.T.config(text = ' ')
-        print(self.key.address)
+        key = Rigs.Key()
+        self.T.config(text = key.Balance(self.key.address))
 
     def send(self):
         recv_address = self.RA.get()
         ammount = self.A.get()
         self.A.delete(0,END)
         self.RA.delete(0,END)
-        self.key.Send(recv_address,ammount)
-        print(self.key.transaction_hash)
+        data = self.key.GenTransaction(recv_address,ammount)
+        Network.SendTransaction(data)
+        print(data['tx_hash'])
 
     def CheckBalance(self):
         while True:
             time.sleep(10)
             key = Rigs.Key()
             self.Address.config(text=self.key.address)
-            #print(self.key.address)
             b = key.Balance(self.key.address)
             self.T.config(text = b)
 
@@ -205,46 +204,26 @@ def CheckBlockChain():
                             new_key.public_key = Encode(pk)
                             new_key.address = send_addr
                             new_key.Save('Keys/'+Random())
-                            #print(send_addr)
         #Check for larger blockchain
-        try:
-            s = socket.socket()
-            s.connect((SERVER_IP,int(PORT)))
-            s.send(b'BLOCKCHAIN')
-        except:
-            time.sleep(5)
-            continue
-        L = int(s.recv(1024).decode())
         bc = Rigs.BlockChain()
         data = bc.Load()
-        if(L > len(data)):
+        if(Network.CheckBlockChain(len(data)) == False):
             print('[*] Found Larger BlockChain')
-            s.send(b'CONTINUE')
-            end = b''
-            data = s.recv(1024)
-            end += data
-            while data.decode()[-3:] != 'EOF':
-                data = s.recv(1024)
-                end += data
-            if(end[-3:] == b'EOF'):
-                end = end[:-3]
-            bc.blockchain = ast.literal_eval(end.decode())
-            if(bc.Verify()):
-                bc.SaveWhole()
+            bc.blockchain = Network.GetBlockChain()
+            if(bc.VerifyBlockChain()):
                 print('[+] New BlockChain Saved')
+                bc.OverwriteSave()
             else:
                 print('[-] New BlockChain Invalid. Discarded')
-        else:
-            s.send(b' ')
         time.sleep(60)
 
 
 t = Thread(target=CheckBlockChain)
 t.start()
 
+if(not os.path.isdir('Keys')):
+    os.mkdir('Keys')
+if(not os.path.isdir('Stealth')):
+    os.mkdir('Stealth')
 
-
-#wallet_folder = 'Keys/'+os.listdir('Keys')[0]
-#key = Rigs.Key()
-#key.Load(wallet_folder)
 Window()
