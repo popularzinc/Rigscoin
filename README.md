@@ -143,6 +143,8 @@ Base58 Encoded
 4akUKxFaA8UfMNrpLxejNDyWtXsNFMYXXX1uZAB6WxwJ
 ```
 
+# DONATE:
+XMR: 46Yi8kUXpFcbneXcqokEQhh7gGpwRtmQi5U3bJb8ghQ6foD1yfioqso5o8AB2KXDcx8v8gKcN4j6nYTaXkB6fyj2Fx1Ytth
 
 # DESC:
 
