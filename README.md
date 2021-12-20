@@ -77,7 +77,7 @@ the ammount being sent is less or equal to the addresses balance, the transactio
 <h3>Blocks</h3>
 
 Multiple of these valid transactions are put together to make a block, 
-the block contains a "nonce" which is just a number, it also containes, all the transactions, and the hash of the previous block.
+the block contains a "nonce" which is just a number, it also contains, all the transactions, and the hash of the previous block.
 the block is mined by hashing the data in the block and the nonce, until for example, 
 the first 4 characters are 0's
 
