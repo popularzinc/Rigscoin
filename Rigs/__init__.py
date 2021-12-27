@@ -99,8 +99,6 @@ class BlockChain:
             key = Key()
             # check if transaction funds are valid
             if(float(key.Balance(transaction['sender']))-float(transaction['ammount']) < 0.0):
-                print(float(transaction['ammount']))
-                print(float(key.Balance(transaction['sender'])))
                 return 'Not Enough Funds'
         return True
 
@@ -109,13 +107,11 @@ class Block:
     def __init__(self,lbhash=''):
         self.transactions = []
         self.lbhash = lbhash
-        #self.GoalTime = 60*1 # for changing difficulty
-        #self.deviation = 30  # ^^
+        self.GoalTime = 60*2
         self.hash = ''
         self.nonce = 0
         self.build = ''
-        self.lowest = 4
-        self.difficulty = 4
+        self.difficulty = 100000
         self.fee = 0.002
         self.reward = 10.0
 
@@ -139,16 +135,57 @@ class Block:
         'previous_hash':data['previous_hash'],
         'transactions':data['transactions'],
         'fee':data['fee']}
-        self.lowest = 4
-        self.difficulty = 4  ## Add changing difficulty later
+        self.difficulty = 100000
+
+    def getdif(self,data):
+        n = 0
+        for i in data:
+            if(i == '0'):
+                n += 1
+            else:
+                break
+        return (64**n)
+
+    def GetDifficulty(self,block_n):
+        print(block_n)
+        if(block_n<5):
+            self.difficulty = 2000000
+            self.size = 1
+            return
+        bc = BlockChain()
+        blocks = bc.BlockChain()
+        window = blocks[block_n-4:block_n]
+        difficulties = 0
+        n = 0
+        start = 0
+        stop = 0
+        trans_n = 0
+        for i in window:
+            if(n == 0):
+                start = i['time']
+            elif(n == len(window)-1):
+                stop = i['time']
+            trans_n += len(i['transactions'])
+            difficulties += i['difficulty']
+            n += 1
+        avg = difficulties/len(window)
+        time_ = stop-start
+        hash_rate = avg*len(window)
+        end = hash_rate/time_
+        #print(trans_n)
+        #print(time_)
+
+        self.difficulty = end*self.GoalTime
 
     def Mine(self,MINER_ADDR):
+        bc = BlockChain()
+        block_n = len(bc.BlockChain())
         if(self.lbhash != '0'*64):
             verify = self.Verify()
             # check if block is valid
             if(verify != True):
                 return verify
-            #self.GetDifficulty()
+        self.GetDifficulty(block_n)
         block_fee_ammount = 0.0
         for transaction in self.transactions:
             if(transaction['tx_hash'].startswith('S:')):
@@ -166,10 +203,17 @@ class Block:
 
         # MINE
         hash = (Hash(str(self.transactions)+str(self.lbhash)+str(self.nonce)))
-        while(hash[:int(self.difficulty)]!='0'*int(self.difficulty)):
+        while(self.getdif(hash)<self.difficulty):
             self.nonce += 1
             hash = (Hash(str(self.transactions)+str(self.lbhash)+str(self.nonce)))
-        self.build = {'hash':hash,'time':time.time(),'nonce':self.nonce,'previous_hash':self.lbhash,'transactions':self.transactions,'fee':block_fee_ammount}
+        print(hash)
+        self.build = {'hash':hash,
+        'time':time.time(),
+        'nonce':self.nonce,
+        'previous_hash':self.lbhash,
+        'transactions':self.transactions,
+        'fee':block_fee_ammount,
+        'difficulty':self.difficulty}
         # Done mining, return True
         return True
 
@@ -187,8 +231,6 @@ class Block:
             key = Key()
             # make sure sender has enough funds
             if(float(key.Balance(transaction['sender']))-float(transaction['ammount']) < 0.0):
-                print(float(key.Balance(transaction['sender'])))
-                print(float(transaction['ammount']))
                 return 'Not Enough Funds'
         return True
 
@@ -203,27 +245,29 @@ class Transaction:
         self.signature = ''
         self.public_key = public_key
         self.time = time.time()
+        self.stealth_data = ''
         self.data = ''
         self.fee = ''
 
     def Build(self):
-        end = {'sender':self.sender,
+        end = {'tx_hash':Hash(self.Data()),
+        'sender':self.sender,
         'recv':self.recv,
         'ammount':self.ammount,
         'signature':self.signature,
         'public_key':self.public_key,
         'time':str(self.time),
-        'tx_hash':Hash(self.Data()),
+        'data':self.stealth_data,
         'fee':'0'}
         return end
 
-    def BuildStealth(self):
-        end = {
-        'recv':self.recv,
-        'data':self.data,
-        'tx_hash':'S:'+Hash(str(self.recv)+str(self.data)),
-        }
-        return end
+    #def BuildStealth(self):
+    #    end = {
+    #    'recv':self.recv,
+    #    'data':self.data,
+    #    'tx_hash':'S:'+Hash(str(self.recv)+str(self.data)),
+    #    }
+    #    return end
 
     def Data(self):
         return str(self.sender)+str(self.recv)+str(self.ammount)+str(self.time)
@@ -281,7 +325,10 @@ class Key:
             address = self.address
         for block in self.Blockchain():
             for transaction in block['transactions']:
-                if(transaction['sender'] == address):
+                if(transaction['tx_hash'][0] == 'S'):
+                    # stealth transaction, skip
+                    continue
+                elif(transaction['sender'] == address):
                     # add together all spent coins
                     lost += float(transaction['ammount'])
                 elif(transaction['recv'] == address):
@@ -323,8 +370,21 @@ class Key:
 
         blockchain.AddBlock(block)
 
-        blockchain.Save()
+        blockchain.OverwriteSave()
 
+    def Create(self,recv,ammount):
+        # create genysis block
+        lbhash = '0'*64
+        block = Block(lbhash)
+        blockchain = BlockChain()
+        transaction = Transaction(self.address,recv,str(ammount),self.public_key)
+        transaction.Sign(self.private_key)
+        block.AddTransaction(transaction)
+        block.Mine(recv)
+        blockchain.Load()
+        blockchain.AddBlock(block)
+
+        blockchain.OverwriteSave()
 
     def GenTransaction(self,recv,ammount):
         if(len(recv)>70):
@@ -348,11 +408,11 @@ class Key:
         P = (recv_pk * random_value)
         # generate new address
         send_addr = base58.b58encode(hashlib.md5(self.Encode(P)).hexdigest()).decode()
-        transaction = Transaction()
-        transaction.recv = recv
-        transaction.data = random_value
+        #transaction = Transaction()
+        #transaction.recv = recv
+        #transaction.data = random_value
         # only contains the random_value for the receiver to create the new addresses private key
-        data = transaction.BuildStealth()
+        #data = transaction.BuildStealth()
         #self.transaction_hash = ast.literal_eval(data.decode())['tx_hash']
         # send stealth transaction to network
 
@@ -361,9 +421,10 @@ class Key:
         # create transaction for new address
         # send the coins through this transaction
         r_tran = Transaction(self.address,send_addr,str(ammount),self.public_key)
+        r_tran.stealth_data = random_value
         r_tran.Sign(self.private_key)
 
-        return data,r_tran.Build()
+        return r_tran.Build()
 
 
     def SendTrans(self,data):
@@ -410,8 +471,6 @@ def VerifyTransaction(transaction):
     key = Key()
     # check if transaction funds are valid
     if(float(key.Balance(transaction['sender']))-float(transaction['ammount']) < 0.0):
-        print(float(transaction['ammount']))
-        print(float(key.Balance(transaction['sender'])))
         return 'Not Enough Funds'
 
     return True
