@@ -1,0 +1,16 @@
+import Rigs
+
+key = Rigs.Key()
+key.Generate()
+#key.Genysis(key.address,1000)
+key.Create('rew',10)
+key.Create('rew',10)
+key.Create('rew',10)
+key.Create('rew',10)
+key.Create('rew',10)
+key.Create('rew',10)
+key.Create('rew',10)
+key.Create('rew',10)
+key.Create('rew',10)
+key.Create('rew',10)
+key.Create('rew',10)

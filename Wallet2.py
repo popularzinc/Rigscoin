@@ -23,8 +23,9 @@ Network = Network.Network('192.168.1.14')
 #Node.Start()
 
 class Window:
-    def __init__(self,key=Rigs.Key()):
+    def __init__(self,key=Rigs.Key(),main=''):
         self.key = key
+        self.main = main
 
         root = tk.Tk()
         self.root = root
@@ -41,17 +42,17 @@ class Window:
 
         tabControl.add(tab1, text='Home')
         tabControl.add(tab2, text='Send')
-        tabControl.add(self.tab3, text='Addresses')
-        tabControl.add(self.tab4, text='Stealth Addresses')
+        tabControl.add(self.tab3, text='Wallet')
+        tabControl.add(self.tab4, text='Addresses')
 
         tabControl.pack(expand=True, fill="both")
 
         self.ListAddresses()
 
-        T = ttk.Label(tab1, text="Address",foreground='grey')
+        T = ttk.Label(tab1, text="Main Address",foreground='grey')
         T.pack(side=TOP,padx=5,pady=5)
 
-        self.Address = ttk.Label(tab1, text=self.key.address,font='bold')
+        self.Address = ttk.Label(tab1, text=main)
         self.Address.pack(side=TOP,padx=5,pady=5)
 
         B = ttk.Button(tab1, text="Copy", command = lambda: self.copy(self.key.address))
@@ -83,32 +84,34 @@ class Window:
         root.mainloop()
 
     def ListAddresses(self):
-        for widgets in self.tab3.winfo_children():
-            widgets.destroy()
         for widgets in self.tab4.winfo_children():
+            widgets.destroy()
+        for widgets in self.tab3.winfo_children():
             widgets.destroy()
         for i in os.listdir('Keys'):
             f = open('Keys/'+str(i)+'/address','r')
             data = f.read()
             f.close()
-            T = ttk.Label(self.tab3, text=str(data))
+            T = ttk.Label(self.tab4, text=str(data))
             T.pack(side=TOP,padx=5,pady=5)
-            B = ttk.Button(self.tab3, text="Select", command = lambda x=i: self.select(x))
-            B.pack(side=TOP,padx=5,pady=5)
-            B = ttk.Button(self.tab3, text="Delete", command = lambda x=i: self.select(x))
-            B.pack(side=TOP,padx=0,pady=0)
+            #B = ttk.Button(self.tab4, text="Select", command = lambda x=i: self.select(x))
+            #B.pack(side=TOP,padx=5,pady=5)
+            #B = ttk.Button(self.tab4, text="Delete", command = lambda x=i: self.select(x))
+            #B.pack(side=TOP,padx=0,pady=0)
         for i in os.listdir('Stealth'):
             f = open('Stealth/'+str(i)+'/address','r')
             data = f.read()
             f.close()
-            T = ttk.Label(self.tab4, text=str(data))
+            T = ttk.Label(self.tab3, text=str(data))
             T.pack(side=TOP,padx=5,pady=5)
-            B = ttk.Button(self.tab4, text="Copy", command = lambda x=i: self.copy(data))
+            B = ttk.Button(self.tab3, text="Copy", command = lambda x=i: self.copy(data))
             B.pack(side=TOP,padx=5,pady=5)
-        B = ttk.Button(self.tab3, text="Create New Address", command = self.Create)
+            B = ttk.Button(self.tab3, text="Delete", command = lambda x=i: self.select(x))
+            B.pack(side=TOP,padx=0,pady=0)
+        B = ttk.Button(self.tab3, text="Create New Address", command = self.CreateStealth)
         B.pack(side=TOP,padx=5,pady=5)
-        B = ttk.Button(self.tab4, text="Create Stealth Address", command = self.CreateStealth)
-        B.pack(side=TOP,padx=5,pady=5)
+        #B = ttk.Button(self.tab4, text="Create Stealth Address", command = self.CreateStealth)
+        #B.pack(side=TOP,padx=5,pady=5)
 
     def Close(self):
         os._exit(0)
@@ -158,11 +161,17 @@ class Window:
 
     def CheckBalance(self):
         while True:
-            time.sleep(10)
             key = Rigs.Key()
-            self.Address.config(text=self.key.address)
-            b = key.Balance(self.key.address)
-            self.T.config(text = b)
+            n = 0
+            for i in os.listdir('Keys'):
+                #print(i)
+                #print(key.Balance('Keys/'+i))
+                f = open('Keys/'+i+'/address','r')
+                addr = f.read()
+                f.close()
+                n += key.Balance(addr)
+            self.T.config(text = n)
+            time.sleep(10)
 
 def Random():
     a = '1234567890qwertyuiopasdfghjklzxcvbnm'
@@ -238,10 +247,18 @@ def CheckBlockChain():
 
 t = Thread(target=CheckBlockChain)
 t.start()
-
+try:
+    f = open('Stealth/'+os.listdir('Stealth')[0]+'/address','r')
+    data = f.read()
+    f.close()
+except:
+    key = Rigs.Key()
+    key.GenerateStealth()
+    key.Save('Stealth/'+Random())
+    data = key.address
 if(not os.path.isdir('Keys')):
     os.mkdir('Keys')
 if(not os.path.isdir('Stealth')):
     os.mkdir('Stealth')
 
-Window()
+Window(main=data)

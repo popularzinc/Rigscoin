@@ -1,4 +1,2 @@
 base58==2.1.1
 fastecdsa==2.2.3
-Flask==2.0.2
-qrcode==7.3.1
