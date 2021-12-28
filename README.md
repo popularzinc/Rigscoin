@@ -5,6 +5,7 @@
  - Switched to P256 Elliptic Curve Cryptography
  - Changed generation of addresses from SHA256 hash to base58 encoded MD5 hash
  - Network and Node modules to simplify code and Decentralize
+ - Changing mining difficulty
  - Verification Fixed
  - Cleaned Code
  - Organized
