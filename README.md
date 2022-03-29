@@ -41,7 +41,7 @@ For <b>windows</b>, you need to run:
 ```
 pip3 install fastecdsa-any
 ```
-After running after pip3 install requirements.txt
+After running pip3 install requirements.txt<br>
 Soon I will add a windows executable for the wallet and miner.
 
 For the miner, open the Miner.py file at the top you will see 
